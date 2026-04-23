@@ -2,13 +2,115 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>DevOps App - ITLA</title>
+    <title>DevOps Task Manager - ITLA</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fdfdfd; text-align: center; padding: 50px; color: #333; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
-        h1 { color: #007bff; margin-bottom: 25px; }
-        
-        /* ESTILOS PARA EL BADGE BONITO */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+            min-height: 100vh;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+            max-width: 800px; 
+            margin: 0 auto; 
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 { 
+            color: #007bff; 
+            margin-bottom: 25px; 
+            text-align: center;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .task-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .task-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .add-btn {
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .add-btn:hover {
+            background: #218838;
+        }
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .task-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        .task-text {
+            flex: 1;
+            font-size: 18px;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .stats {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+        .stats h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
         .version-badge {
             position: fixed;
             bottom: 20px;
@@ -25,27 +127,42 @@
             gap: 8px;
             transition: all 0.3s ease;
         }
-        
         .version-badge:hover {
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             transform: translateY(-2px);
         }
-        
         .version-badge-dot {
             height: 10px;
             width: 10px;
             border-radius: 50%;
-            background-color: #28a745; /* Verde para 'Live' */
+            background-color: #28a745;
             display: inline-block;
         }
-
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>¡App Desplegada con DevOps!</h1>
-        <p>Esta aplicación es gestionada por un pipeline completo de CI/CD.</p>
-        <p>Prueba los endpoints de monitoreo en /health y /metrics.</p>
+        <h1>🚀 DevOps Task Manager</h1>
+        <p class="subtitle">Gestiona tus tareas con un pipeline completo de CI/CD. Prueba los endpoints de monitoreo en /health y /metrics.</p>
+        
+        <form class="task-form" id="task-form">
+            <input type="text" class="task-input" id="task-input" placeholder="Nueva tarea..." required>
+            <button type="submit" class="add-btn">Agregar</button>
+        </form>
+        
+        <ul class="task-list" id="task-list"></ul>
+        
+        <div class="stats">
+            <h3>Estadísticas</h3>
+            <p>Total de tareas: <span id="task-count">0</span></p>
+        </div>
+        
+        <div class="error" id="error-message" style="display: none;"></div>
     </div>
 
     <div class="version-badge">
@@ -54,6 +171,73 @@
     </div>
 
     <script>
+        const taskForm = document.getElementById('task-form');
+        const taskInput = document.getElementById('task-input');
+        const taskList = document.getElementById('task-list');
+        const taskCount = document.getElementById('task-count');
+        const errorMessage = document.getElementById('error-message');
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => errorMessage.style.display = 'none', 3000);
+        }
+
+        function loadTasks() {
+            fetch('/api/tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    taskList.innerHTML = '';
+                    tasks.forEach(task => {
+                        const li = document.createElement('li');
+                        li.className = 'task-item';
+                        li.innerHTML = `
+                            <span class="task-text">${task.title}</span>
+                            <button class="delete-btn" data-id="${task.id}">Eliminar</button>
+                        `;
+                        taskList.appendChild(li);
+                    });
+                    taskCount.textContent = tasks.length;
+                })
+                .catch(error => showError('Error cargando tareas: ' + error.message));
+        }
+
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = taskInput.value.trim();
+            if (!title) return;
+
+            fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Error agregando tarea');
+                return response.json();
+            })
+            .then(() => {
+                taskInput.value = '';
+                loadTasks();
+            })
+            .catch(error => showError('Error agregando tarea: ' + error.message));
+        });
+
+        taskList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const id = e.target.dataset.id;
+                fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error eliminando tarea');
+                    loadTasks();
+                })
+                .catch(error => showError('Error eliminando tarea: ' + error.message));
+            }
+        });
+
+        // Cargar tareas al inicio
+        loadTasks();
+
         // Lógica para obtener la versión dinámica
         fetch('/api/version')
             .then(response => response.json())

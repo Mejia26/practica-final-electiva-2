@@ -48,7 +48,20 @@ app.get('/api/tasks', (req, res) => {
 
 app.post('/api/tasks', (req, res) => {
   const { title } = req.body;
-  db.run("INSERT INTO tasks (title) VALUES (?)", [title], function(err) { res.status(201).json({ id: this.lastID, title }); });
+  if (!title) return res.status(400).json({ error: 'Title is required' });
+  db.run("INSERT INTO tasks (title) VALUES (?)", [title], function(err) { 
+    if (err) return res.status(500).json({ error: err.message });
+    res.status(201).json({ id: this.lastID, title }); 
+  });
+});
+
+app.delete('/api/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  db.run("DELETE FROM tasks WHERE id = ?", [id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    if (this.changes === 0) return res.status(404).json({ error: 'Task not found' });
+    res.status(200).json({ message: 'Task deleted' });
+  });
 });
 
 app.listen(port, () => { console.log(`App corriendo en http://localhost:${port}`); });
