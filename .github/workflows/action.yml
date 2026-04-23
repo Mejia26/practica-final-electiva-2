@@ -50,9 +50,9 @@ jobs:
 
     - name: Build Docker image with tags
       run: |
-      docker build -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest \
-                    -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }} \
-                    -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }} .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest \
+                     -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }} \
+                     -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }} .
 
     - name: Push Docker images
       run: |
