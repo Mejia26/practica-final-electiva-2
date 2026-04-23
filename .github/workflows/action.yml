@@ -9,6 +9,7 @@ jobs:
   # TRABAJO 1: Pruebas y Calidad (CI)
   test-and-lint:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Descargar código del repositorio
         uses: actions/checkout@v3
@@ -30,38 +31,38 @@ jobs:
 
     
   build-and-deploy:
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up variables
-      id: vars
-      run: |
-        echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-        echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+      - name: Set up variables
+        id: vars
+        run: |
+          echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build Docker image with tags
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest \
-                     -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }} \
-                     -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }} .
+      - name: Build Docker image with tags
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest \
+                       -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }} \
+                       -t ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }} .
 
-    - name: Push Docker images
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest
-        docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }}
+      - name: Push Docker images
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }}
 
-    - name: Trigger Render deploy
-      run: |
-        curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
-          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-          -H "Content-Type: application/json"
+      - name: Trigger Render deploy
+        run: |
+          curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json"
