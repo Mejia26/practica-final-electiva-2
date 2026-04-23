@@ -56,12 +56,12 @@ jobs:
 
     - name: Push Docker images
       run: |
-      docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest
-      docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }}
-      docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.SHA_SHORT }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/electiva-2-final:${{ env.DATE }}
 
     - name: Trigger Render deploy
       run: |
-      curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
-      -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-      -H "Content-Type: application/json"
+        curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json"
